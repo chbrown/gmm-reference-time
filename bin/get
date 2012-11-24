@@ -1,0 +1,6 @@
+#!/bin/sh
+for F in $*; do
+  echo hadoop fs -get $F $F
+  hadoop fs -get $F $F
+done
+ls -l

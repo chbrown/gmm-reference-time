@@ -1,5 +1,6 @@
 *.class
 *.log
+.DS_Store
 
 # template instantiations:
 jobs/hadoop
@@ -8,8 +9,6 @@ hadoop-conf/hdfs-site.xml
 hadoop-conf/mapred-site.xml
 hadoop-conf/masters
 hadoop-conf/slaves
-
-hadoop-logs/
 
 # sbt specific
 dist/*
@@ -23,6 +22,4 @@ project/plugins/project/
 .scala_dependencies
 
 project/GenWireFormat.scala
-
-hadoop-0.20.2-*/
 

@@ -108,11 +108,16 @@ To run on the cluster, once your cluster is up and running and `hadoop dfsadmin 
 
 Package up a jar of the SBT build. This can take about 2 minutes.
 
-    ./sbt assembly
+    sbt assembly
+
+(If you just want to check that it compiles, you can run just `sbt compile`, but that won't create a jar that you can push around your Hadoop cluster and run.)
 
 Make up some data:
 
     echo "this is a test . this test is short ." > example.txt
+
+And push it to HDFS so our Hadoop job can read it distributedly.
+
     hadoop fs -put example.txt example.txt
 
 There is a helper command `put` that is a simple shortcut for `hadoop -fs put`. The above could be replicated with:
