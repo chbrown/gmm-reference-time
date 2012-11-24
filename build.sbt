@@ -21,7 +21,8 @@ resolvers ++= Seq(
 libraryDependencies ++= Seq(
   "edu.umd" % "cloud9" % "1.3.5",
   "info.bliki.wiki" % "bliki-core" % "3.0.16",
-  "commons-lang" % "commons-lang" % "2.6"
+  "commons-lang" % "commons-lang" % "2.6",
+  "org.clapper" %% "argot" % "0.4"
 )
 
 scalacOptions ++= Seq("-deprecation", "-Ydependent-method-types", "-unchecked")

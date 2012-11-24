@@ -5,6 +5,7 @@ import org.apache.hadoop.fs.Path
 
 object DtmPrep extends ScoobiApp {
   // note to self: blacklist cannot be out here, it must be in teh run method.
+
   def writeHdfsFile(path: String, contents: String, overwrite: Boolean = false) {
     // lookup_out is a FSDataOutputStream
     val lookup_out = configuration.fs.create(new Path(path), overwrite)
