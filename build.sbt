@@ -22,6 +22,7 @@ libraryDependencies ++= Seq(
   "edu.umd" % "cloud9" % "1.3.5",
   "info.bliki.wiki" % "bliki-core" % "3.0.16",
   "commons-lang" % "commons-lang" % "2.6",
+  "cc.mallet" % "mallet" % "2.0.7-RC2",
   "org.clapper" %% "argot" % "0.4"
 )
 
