@@ -23,7 +23,7 @@ libraryDependencies ++= Seq(
   "info.bliki.wiki" % "bliki-core" % "3.0.16",
   "commons-lang" % "commons-lang" % "2.6",
   "cc.mallet" % "mallet" % "2.0.7-RC2",
-  "org.clapper" %% "argot" % "0.4"
+  "org.clapper" %% "argot" % "0.4" // http://software.clapper.org/argot/
 )
 
 scalacOptions ++= Seq("-deprecation", "-Ydependent-method-types", "-unchecked")

@@ -29,12 +29,12 @@ object Tsv {
   }
 }
 
-object isStopword {
-  // from http://www.ranks.nl/resources/stopwords.html
-  val tokens = "a about above after again against all am an and any are aren't as at be because been before being below between both but by can't cannot could couldn't did didn't do does doesn't doing don't down during each few for from further had hadn't has hasn't have haven't having he he'd he'll he's her here here's hers herself him himself his how how's i i'd i'll i'm i've if in into is isn't it it's its itself let's me more most mustn't my myself no nor not of off on once only or other ought our ours ourselves out over own same shan't she she'd she'll she's should shouldn't so some such than that that's the their theirs them themselves then there there's these they they'd they'll they're they've this those through to too under until up very was wasn't we we'd we'll we're we've were weren't what what's when when's where where's which while who who's whom why why's with won't would wouldn't you you'd you'll you're you've your yours yourself yourselves".split(' ')
+// object isStopword {
+//   // from http://www.ranks.nl/resources/stopwords.html
+//   val tokens = "a about above after again against all am an and any are aren't as at be because been before being below between both but by can't cannot could couldn't did didn't do does doesn't doing don't down during each few for from further had hadn't has hasn't have haven't having he he'd he'll he's her here here's hers herself him himself his how how's i i'd i'll i'm i've if in into is isn't it it's its itself let's me more most mustn't my myself no nor not of off on once only or other ought our ours ourselves out over own same shan't she she'd she'll she's should shouldn't so some such than that that's the their theirs them themselves then there there's these they they'd they'll they're they've this those through to too under until up very was wasn't we we'd we'll we're we've were weren't what what's when when's where where's which while who who's whom why why's with won't would wouldn't you you'd you'll you're you've your yours yourself yourselves".split(' ')
 
-  def apply(token: String) = tokens.contains(token)
-}
+//   def apply(token: String) = tokens.contains(token)
+// }
 
 object Topics {
   val procs = Runtime.getRuntime.availableProcessors
@@ -83,10 +83,16 @@ object Topics {
   //   }
   //   instances
   // }
+  val numerals = "1 2 3 4 5 6 7 8 9 0 "
+  val roman_numerals = "ii iii iv "
+  val letters = "a b c d e f g h j k l m n o p q r s t u v w x y z "
+  val common = "also all about who have not has th had been be its this or an but are that were as which with it from on at for is by was to and in of the "
+  val stopwords = (numerals + roman_numerals + letters + common + "000").split(' ').toSet
 
   def main(args: Array[String]) = {
     val in = args(0) // eb-12k-windows.tsv
-    val out = args(1)
+    val numTopics = args(1).toInt
+    // val out = args(1)
 
     val pipes = new SerialPipes(List(new TokenSequence2FeatureSequence()))
     val instance_list = new InstanceList(pipes)
@@ -95,7 +101,7 @@ object Topics {
       line.split("\t") match {
         case Array(year, text) =>
           val tokens = text.toLowerCase.split("[^'a-z0-9A-Z]+").
-            filterNot(isStopword(_)).
+            filterNot(stopwords).
             filterNot(_.isEmpty)
           val tokenSequence = new TokenSequence(tokens.map(new Token(_)))
           val instance = new Instance(tokenSequence, year, index, null)
@@ -103,7 +109,7 @@ object Topics {
       }
     }
 
-    val topicModel = trainModel(instance_list, 10, alpha=1, numIterations=500)
+    val topicModel = trainModel(instance_list, numTopics) // , alpha=1, numIterations=500
     // printTopWords(topicModel, 100)
     // val topicTokenWeights = topicAssociations(topicModel)
     // // convert Map[topic_i -> List[(token, count)]] into

@@ -4,7 +4,7 @@ import com.nicta.scoobi.Scoobi._
 import org.apache.hadoop.fs.Path
 
 object DtmPrep extends ScoobiApp {
-  // note to self: blacklist cannot be out here, it must be in teh run method.
+  // note to self: stopwords cannot be out here, it must be in teh run method.
 
   def writeHdfsFile(path: String, contents: String, overwrite: Boolean = false) {
     // lookup_out is a FSDataOutputStream
@@ -19,7 +19,7 @@ object DtmPrep extends ScoobiApp {
   }
 
   def run() {
-    val blacklist =  "a b c d e f g h j k l m n o p q r s t u v w x y z also all about who have not has th had been be its this or an but are that were as which with it from on at for is by was to and in of the".split(' ').toSet
+    val stopwords =  "a b c d e f g h j k l m n o p q r s t u v w x y z also all about who have not has th had been be its this or an but are that were as which with it from on at for is by was to and in of the".split(' ').toSet
 
     // run chbrown.tacc.DtmPrep eb-12k-windows.tsv eb-12k-windows-svm
     var from = args(0)
@@ -29,7 +29,7 @@ object DtmPrep extends ScoobiApp {
       case year :: text :: _ => text
       // case Array(year, text) => text
     } flatMap { text =>
-      "[a-z]['a-z]*".r.findAllIn(text.toLowerCase).toList.filterNot(blacklist).map((_, 1))
+      "[a-z]['a-z]*".r.findAllIn(text.toLowerCase).toList.filterNot(stopwords).map((_, 1))
     }
 
     val distributed_counts = tokens.groupByKey.combine((a: Int, b: Int) => a + b)
@@ -52,7 +52,7 @@ object DtmPrep extends ScoobiApp {
 
     val svm_lines = fromDelimitedTextFile(from, "\t") {
       case year :: text :: _ => text
-        val tokens = "[a-z]['a-z]*".r.findAllIn(text.toLowerCase).toList.filterNot(blacklist)
+        val tokens = "[a-z]['a-z]*".r.findAllIn(text.toLowerCase).toList.filterNot(stopwords)
         val indices = tokens.map(typeIndexMap)
         val indexCounts = indices.groupBy(identity).toList.sortBy(_._1).map { case (k, v) =>
           k+":"+v.length
