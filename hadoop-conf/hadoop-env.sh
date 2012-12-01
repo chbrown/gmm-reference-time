@@ -20,5 +20,7 @@ export PATH=$TACC_HADOOP/bin:$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$JAVA_HOME/bin:$
 
 # `/usr/local/etc/taccinfo` is what you see after /etc/motd when you login
 # cat /usr/local/etc/taccinfo to see why the two lines below work
-export TACC_PROJECT_ID=`grep $USER /share/sge6.2/default/acct/map/projectuser.map | awk '{print $2}'`
-export TACC_PROJECT_NAME=`grep $TACC_PROJECT_ID /share/sge6.2/default/acct/map/project.map | awk '{print $1}'`
+if [ -z "$TACC_PROJECT_NAME" ]; then
+  export TACC_PROJECT_ID=`grep $USER /share/sge6.2/default/acct/map/projectuser.map | awk '{print $2}'`
+  export TACC_PROJECT_NAME=`grep $TACC_PROJECT_ID /share/sge6.2/default/acct/map/project.map | awk '{print $1}'`
+fi

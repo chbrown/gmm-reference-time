@@ -3,11 +3,7 @@ package chbrown.tacc
 import com.nicta.scoobi.Scoobi._
 
 object YearWindows extends ScoobiApp {
-  def run() {
-    // run cluster chbrown.tacc.YearWindows eb-12k.tsv eb-windows-2
-    var from = args(0)
-    val to = args(1)
-
+  def windows() {
     val eb_windows = fromTextFile(from).flatMap { line =>
       line.split("\t") match {
         case Array(slug, title, text) =>
@@ -29,15 +25,38 @@ object YearWindows extends ScoobiApp {
             ((year, title), window.map(_._2).mkString(" "))
           }
         case _ =>
-          val marker = (("xxxx", "No title"), "wtf")
+          // val marker = (("xxxx", "No title"), "wtf")
           // List[((String, String), List[String])](marker)
-          List(marker)
+          // List(marker)
+          List()
       }
 
     }
 
-    val combined_windows = eb_windows.groupByKey.combine((a: String, b: String) => a+" "+b)
-    val tsv = combined_windows.map { case ((year, title), text) => year+"\t"+text }
+  }
+  def run() {
+    // run cluster chbrown.tacc.YearWindows eb-12k.tsv eb-windows-2
+    var from = args(0)
+    val to = args(1)
+
+    // documents is a List[(year: String, document: String)]
+    val documents = fromTextFile(from).flatMap { line =>
+      line.split("\t") match {
+        case Array(slug, title, text) =>
+          "\\b\\d{4}\\b".r.findAllIn(text).find(year => 500 < year.toInt && year.toInt < 2200).match {
+            case Some(year) => List((year, text))
+            case _ => List()
+          }
+        case _ => List()
+      }
+
+    }
+
+    val tsv = documents.groupByKey.combine { (a: String, b: String) =>
+      a+" "+b
+    }.map {
+      case (year, text) => year+"\t"+text
+    }
 
     persist(toTextFile(tsv, to, overwrite=true))
   }
