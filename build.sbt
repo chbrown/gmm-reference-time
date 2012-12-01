@@ -15,7 +15,8 @@ resolvers ++= Seq(
   "cloudera" at "https://repository.cloudera.com/content/repositories/releases",
   "apache" at "https://repository.apache.org/content/repositories/releases",
   "scoobi" at "http://nicta.github.com/scoobi/releases",
-  "gwtwiki" at "http://gwtwiki.googlecode.com/svn/maven-repository/"
+  "gwtwiki" at "http://gwtwiki.googlecode.com/svn/maven-repository/",
+  "repo.codahale.com" at "http://repo.codahale.com"
 )
 
 libraryDependencies ++= Seq(
@@ -23,7 +24,7 @@ libraryDependencies ++= Seq(
   "info.bliki.wiki" % "bliki-core" % "3.0.16",
   "commons-lang" % "commons-lang" % "2.6",
   "cc.mallet" % "mallet" % "2.0.7-RC2",
-  "org.clapper" %% "argot" % "0.4" // http://software.clapper.org/argot/
+  "com.codahale" % "jerkson_2.9.1" % "0.5.0"
 )
 
 scalacOptions ++= Seq("-deprecation", "-Ydependent-method-types", "-unchecked")

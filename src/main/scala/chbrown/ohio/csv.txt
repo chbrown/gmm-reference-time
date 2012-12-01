@@ -1,0 +1,69 @@
+// from https://gist.github.com/115557
+import scala.util.parsing.combinator._
+import scala.util.parsing.combinator.syntactical._
+object csvParser extends RegexParsers {
+  // test // Perform unit-testing on first load.
+
+  // Turns off whitespace removal: line separators are an important part of the CSV format...
+  override def skipWhitespace = false
+
+  def CRLF = "\r\n" | "\n"
+  def EOF = "\\z".r
+
+  // Any number of columns, but no backtracking over accidental double-quotes.
+  def stringInQuotes = """(?xs) ".*?" |""".r ^^ {case qstr => if (qstr.length != 0) qstr.substring (1, qstr.length - 1) else ""}
+  def line = stringInQuotes ~ ';' ~ stringInQuotes ~ (CRLF | EOF) ^^ {case col1 ~ _ ~ col2 ~ _ => col1 :: col2 :: Nil}
+
+  // Fixed number of columns, but backtracking over accidental double-quotes works.
+  def unquote (str: String) = str.substring (1, str.length - (str.charAt (str.length - 1) match {case ';'|'\r'|'\n' => 2; case _ => 1}))
+  def col1 = ("(?s)\".*?\";".r ^^ unquote _) | (";" ^^ (_ => ""))
+  def col2 = ("(?s)\".*?\"(\\r|\\n)?".r ^^ unquote _) | (("\r" | "\n" | EOF) ^^ (_ => ""))
+  def twoColumns = col1 ~ col2 ~ opt ("\n") ^^ {case v1 ~ v2 ~ _ => v1 :: v2 :: Nil}
+
+  def csv: Parser[List[List[String]]] = rep1 (twoColumns)
+
+  def unwrap[T] (result: ParseResult[T]) = result match {
+    case Success (data, _) => data
+    case f@Failure (message, _) => throw new Exception (f.toString)
+    case e@Error (message, _) => throw new Exception (e.toString)
+  }
+
+  def test = {
+    def check[T] (s: String, expect: AnyRef): AnyRef = {
+      val result = unwrap (parse (csv, s))
+      assert (result.toString == expect.toString, "expected: \n" + expect + "\n; got: \n" + result)
+    }
+    check (";", List (List ("", ""))) // One string with both columns absent.
+    check ("\"qq\nqq\";", List (List ("qq\nqq", "")))
+    check (";\" name1 \n name2 \"", List (List ("", " name1 \n name2 ")))
+    check ("\"qq\";\"zz\nzz\"", List (List ("qq", "zz\nzz")))
+    check ("\"qq\";\"zz\"\n", List (List ("qq", "zz")))
+    check (";\n;\n;", List (List ("", ""), List ("", ""), List ("", "")))
+    check ("\"qq\";\"zz\"\n\"qq\";\"zz\"\n\"qq\";\"zz\"", List (List ("qq", "zz"), List ("qq", "zz"), List ("qq", "zz")))
+  }
+}
+
+
+  // def main(args: Array[String]) = {
+  //   // println(args.size+" args:"+args.mkString("-"))
+  //   val document = if (args.size == 0) {
+  //     "I'm trying to write a simple code, which builds pairs of words in (tokenised) text and produces number of times each pair occurs (even when same-word pairs occur multiple times, it's OK as it'll be evened out by the further algorithm). The problem I have is, when I use..."
+  //   }
+  //   else {
+  //     args.mkString
+  //   }
+  //   var tokens = document.toLowerCase.split("[^'a-z0-9A-Z]+").toList
+  //   println("Tokens"+tokens.mkString(" "))
+  //   val counts = Liwc(tokens)
+  //   println(counts)
+  // }
+
+  json.scalafy
+      // case str: java.lang.String =>
+      //   str.asScala
+      // case numberInt: java.lang.Integer =>
+      //   numberInt.asScala
+      // case numberDouble: java.lang.Double =>
+      //   numberDouble.asScala
+      // case boolean: java.lang.Boolean =>
+      //   boolean.asScala
