@@ -16,13 +16,15 @@ import java.util.TreeSet
 // Lots of help from https://gist.github.com/1763193
 // http://mallet.cs.umass.edu/topics.php
 
-class MathList[T](xs: List[T]) {
-  def mean() = (0 /: xs)(_+_) / xs.size
-}
+// class MathList[T: Numeric[T]](xs: List[T]) {
+  // def mean[T <% Numeric](values: Seq[T]) = values.foldLeft(0d)(_ + _) / values.size
+  // def mean() = xs.sum / xs.size
+// }
 
-object Implicits {
-  implicit def listToMathList[T](xs: List[T]) = new MathList(xs)
-}
+// object Implicits {
+  // implicit def listToMathList[T](xs: List[T]) = new MathList(xs)
+  // implicit def listToMathList[T: Numeric](xs: List[T]) = new MathList(xs)
+// }
 
 object ArgMapper {
   def apply(args: Seq[String], defaults: Map[String, String] = Map()) = {
@@ -202,7 +204,8 @@ case class EB1911(pathIn: String = "/Users/chbrown/corpora/gmm/eb-12k-windows.ts
 
     val instance_list = new InstanceList(pipes)
     year_texts.zipWithIndex.foreach { case ((year, text), index) =>
-      instance_list.addThruPipe(new Instance(text, year, index, null))
+      val digitless_text = "\\b\\d+\\b".r.replaceAllIn(text, "")
+      instance_list.addThruPipe(new Instance(digitless_text, year, index, null))
     }
     instance_list
   }
@@ -272,6 +275,19 @@ object Topics {
     val eb1911 = EB1911()
     topicModel.train(eb1911.instances, numIterations=500)
     val thetas = eb1911.year_texts.indices.map(topicModel.model.getTopicProbabilities)
+
+    eb1911.year_texts.indices.combinations(2).map { case Vector(i1, i2) =>
+      val js_divergence = Divergence.JS(thetas(i1), thetas(i2))
+      (js_divergence, (i1, i2))
+    }.toList.sortBy(_._1).foreach { case (divergence, (i1, i2)) =>
+      val year1 = eb1911.year_texts(i1)._1
+      val year2 = eb1911.year_texts(i2)._1
+      println(year1+"->"+year2+": "+divergence)
+    }
+
+  }
+
+  def meanDistances(thetas: Seq[Seq[Double]], eb1911: EB1911) {
     val distances = List(1, 5, 10, 25, 50)
     distances.foreach { distance =>
       val year_pairs = eb1911.year_texts.indices.zip(eb1911.year_texts.indices.drop(distance))
