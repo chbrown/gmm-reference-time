@@ -14,7 +14,6 @@ object YearWindows extends ScoobiApp {
 
           // return tuples of (year, string window)
           years.map { case (yearCharIndex, year) =>
-            // val closestTokenIndex =
             val window = tokens.indexWhere { case (tokenCharIndex, token) =>
               tokenCharIndex >= yearCharIndex
             } match {
