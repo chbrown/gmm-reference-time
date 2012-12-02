@@ -67,3 +67,17 @@ object csvParser extends RegexParsers {
       //   numberDouble.asScala
       // case boolean: java.lang.Boolean =>
       //   boolean.asScala
+
+
+// Lots of help from https://gist.github.com/1763193
+// http://mallet.cs.umass.edu/topics.php
+
+// class MathList[T: Numeric[T]](xs: List[T]) {
+  // def mean[T <% Numeric](values: Seq[T]) = values.foldLeft(0d)(_ + _) / values.size
+  // def mean() = xs.sum / xs.size
+// }
+
+// object Implicits {
+  // implicit def listToMathList[T](xs: List[T]) = new MathList(xs)
+  // implicit def listToMathList[T: Numeric](xs: List[T]) = new MathList(xs)
+// }

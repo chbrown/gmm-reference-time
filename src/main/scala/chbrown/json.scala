@@ -1,4 +1,4 @@
-package chbrown.ohio
+package chbrown
 
 import com.codahale.jerkson.Json.parse
 import scala.collection.JavaConverters._

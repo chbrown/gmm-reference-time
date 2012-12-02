@@ -4,6 +4,9 @@ import com.nicta.scoobi.Scoobi._
 
 object YearWindows extends ScoobiApp {
   def windows() {
+    var from = args(0)
+    val to = args(1)
+
     val eb_windows = fromTextFile(from).flatMap { line =>
       line.split("\t") match {
         case Array(slug, title, text) =>
@@ -42,7 +45,8 @@ object YearWindows extends ScoobiApp {
     val documents = fromTextFile(from).flatMap { line =>
       line.split("\t") match {
         case Array(slug, title, text) =>
-          "\\b\\d{4}\\b".r.findAllIn(text).find(year => 500 < year.toInt && year.toInt < 2200).match {
+          val first_year = "\\b\\d{4}\\b".r.findAllIn(text).find(year => 500 < year.toInt && year.toInt < 2200)
+          first_year match {
             case Some(year) => List((year, text))
             case _ => List()
           }
@@ -53,9 +57,10 @@ object YearWindows extends ScoobiApp {
 
     val tsv = documents.groupByKey.combine { (a: String, b: String) =>
       a+" "+b
-    }.map {
-      case (year, text) => year+"\t"+text
+    } map { case (year, text) =>
+      year+"\t"+text
     }
+    // val tsv = documents.groupByKey.combine { _+" "+_ } map { _+"\t"+_ }
 
     persist(toTextFile(tsv, to, overwrite=true))
   }
