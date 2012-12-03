@@ -37,7 +37,7 @@ object YearWindows extends ScoobiApp {
 
   }
   def run() {
-    // run cluster chbrown.tacc.YearWindows eb-12k.tsv eb-windows-2
+    // run chbrown.tacc.YearWindows eb-12k.tsv eb-first-year
     var from = args(0)
     val to = args(1)
 

@@ -1,2 +1,3 @@
-
+#!/bin/sh
+# You should run `sbt assembly` before you run this.
 hadoop jar target/tacc-hadoop-assembly.jar "$@"

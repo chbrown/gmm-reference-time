@@ -90,7 +90,7 @@ case class EB1911(pathIn: String) extends InstanceCorpus {
 
 object Mallet {
 
-  def meanDistances(thetas: Seq[Seq[Double]], eb1911: EB1911) {
+  def meanDistances(thetas: Seq[Array[Double]], eb1911: EB1911) {
     val distances = List(1, 5, 10, 25, 50)
     distances.foreach { distance =>
       val year_pairs = eb1911.year_texts.indices.zip(eb1911.year_texts.indices.drop(distance))
@@ -109,11 +109,14 @@ object Mallet {
     // val in = args(0) // eb-12k-windows.tsv
     // val numTopics = args(1).toInt
 
-    val eb1911 = EB1911("/Users/chbrown/corpora/gmm/eb-12k-windows.tsv")
-    val topicModel = MalletTopicModel(50, alpha=1)
-    topicModel.train(eb1911.instances, numIterations=50)
+    // val eb1911 = EB1911("/Users/chbrown/corpora/gmm/eb-12k-windows.tsv")
+    val eb1911 = EB1911("/scratch/01613/chbrown/eb-12k-windows.tsv")
 
-    // val thetas = eb1911.year_texts.indices.map(topicModel.model.getTopicProbabilities)
+    val topicModel = MalletTopicModel(500, alpha=1)
+    topicModel.train(eb1911.instances, numIterations=500)
+
+    val thetas = eb1911.year_texts.indices.map(topicModel.model.getTopicProbabilities)
+    meanDistances(thetas, eb1911)
     // eb1911.year_texts.indices.combinations(2).map { case IndexedSeq(i1, i2) =>
     //   val js_divergence = Divergence.JS(thetas(i1), thetas(i2))
     //   (js_divergence, (i1, i2))
@@ -123,11 +126,15 @@ object Mallet {
     //   println(year1+"->"+year2+": "+divergence)
     // }
 
-    val model = topicModel.model
     // println("model.topicMask: " + model.topicMask)
     // println("model.topicBits: " + model.topicBits)
 
     // model.alphabet.lookupObject(typeIndex)
+  }
+  def getTopicTypeCounts(topicModel: MalletTopicModel) = {
+    // , eb1911: EB1911
+    val model = topicModel.model
+
     val topicTypeCounts = (0 until model.alphabet.size).flatMap { typeIndex =>
       model.typeTopicCounts(typeIndex).takeWhile(_ > 0).map { topicCount =>
         val topic = topicCount & model.topicMask
@@ -148,6 +155,8 @@ object Mallet {
       println
       println("Topic " + topic + " (" + totalTokens + ") -> " + typeCountsLine.take(500))
     }
+
+    topicTypeCounts
     // val topicCounts =
     // val line = typeIndex + " " + typeString + " " + topicCounts
     // println(line)
