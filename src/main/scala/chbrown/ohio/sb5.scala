@@ -38,11 +38,7 @@ class SB5(pathIn: String, first: Int = 1000000) extends InstanceCorpus {
   // groupBy returns a list of author->List(tweet_tuples) pairs
   // authors = List((String, List((String, String))))
 
-  def instances = {
-    val instance_list = new InstanceList(new TokenSequence2FeatureSequence())
-    instance_list.addThruPipe(tweets.toIterator.map(_.instance))
-    instance_list
-  }
+  def instances = tweets.map(_.instance)
 }
 
 object Topics {
@@ -52,10 +48,16 @@ object Topics {
         "pathOut" -> "/Users/chbrown/corpora/ohio/sb5-b.out"))
 
     val sb5 = new SB5(args("pathIn"), 1000)
-    val topicModel = MalletTopicModel(10, alpha=1)
-    topicModel.train(sb5.instances)
+    val topicModel = MalletTopicModel(10, a=1)
 
-    val thetas = sb5.tweets.indices.map(topicModel.model.getTopicProbabilities)
+    val instance_list = new InstanceList(new TokenSequence2FeatureSequence())
+    instance_list.addThruPipe(sb5.instances.toIterator)
+    instance_list
+
+    topicModel.addInstances(instance_list)
+    topicModel.estimate
+
+    val thetas = sb5.tweets.indices.map(topicModel.getTopicProbabilities)
 
     sb5.tweets.foreach { tweet =>
       val topic_ranking = topicModel.topicRankings(tweet.index)
@@ -85,7 +87,8 @@ object Topics {
     // tokenLookup(token) will return a List of (topic_index, weight) pairs
 
     // ## Print something like:
-    //     @RepealSB5Ohio: Even if we lose, #NOon2 campaign has been successful in uniting ALL wings of the Democratic Party! Feminists, Socialists, Unionists! #Issue2
+    //     @RepealSB5Ohio: Even if we lose, #NOon2 campaign has been successful in uniting
+    //       ALL wings of the Democratic Party! Feminists, Socialists, Unionists! #Issue2
     //       List((2,63), (4,47), (8,33), (5,25), (7,21))
     //     @RepealSB5Ohio: It's just about money! http://t.co/KKoOVcRz #Issue2
     //       List((7,43), (9,15), (5,5), (3,3), (4,2))

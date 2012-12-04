@@ -1,6 +1,6 @@
 package chbrown.ohio
 
-import chbrown.{MalletTopicModel, InstanceCorpus, ArgMapper, Tabular, Lexicon}
+import chbrown.InstanceCorpus
 
 import cc.mallet.types.{Instance, InstanceList, IDSorter, Token, TokenSequence}
 import cc.mallet.pipe._
@@ -25,7 +25,7 @@ class GeoText(pathIn: String) extends InstanceCorpus {
   io.Source.fromFile(pathIn).getLines.zipWithIndex.foreach { case (line, index) =>
     val parts = line.split("\\t+", 6)
     val clean_text = "http://\\S+".r.replaceAllIn(parts(5), "")
-    instances.addThruPipe(new Instance(clean_text, parts(0), index.toString, null))
+    instance_list.addThruPipe(new Instance(clean_text, parts(0), index.toString, null))
   }
   def instances = instance_list
 }
