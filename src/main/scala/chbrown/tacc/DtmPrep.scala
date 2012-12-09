@@ -9,7 +9,6 @@ object DtmPrep extends ScoobiApp {
   def writeHdfsFile(path: String, contents: String, overwrite: Boolean = false) {
     // lookup_out is a FSDataOutputStream
     val lookup_out = configuration.fs.create(new Path(path), overwrite)
-    // lookup_out.writeInt(lookup_bytes.size)
     // while ((bytesRead = in.read(buffer)) > 0) {
     //   out.write(buffer, 0, bytesRead);
     // }

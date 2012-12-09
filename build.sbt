@@ -14,7 +14,7 @@ resolvers ++= Seq(
   "Sonatype-snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
   "cloudera" at "https://repository.cloudera.com/content/repositories/releases",
   "apache" at "https://repository.apache.org/content/repositories/releases",
-  "scoobi" at "http://nicta.github.com/scoobi/releases",
+//  "scoobi" at "http://nicta.github.com/scoobi/releases",
   "gwtwiki" at "http://gwtwiki.googlecode.com/svn/maven-repository/",
   "repo.codahale.com" at "http://repo.codahale.com"
 )

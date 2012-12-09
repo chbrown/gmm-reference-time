@@ -90,11 +90,13 @@ object Mallet {
     val distances = List(0, 1, 2, 5, 10, 25, 50)
     distances.foreach { distance =>
       // val year_pairs = .zip(year_instances.indices.drop(distance))
-      val comparisons = doc_thetas.combinations(2).filter { case List(doc_theta1, doc_theta2) =>
-        (doc_theta1._1.year - doc_theta2._1.year).abs == distance
+      val comparisons = doc_thetas.combinations(2).filter {
+        case doc_theta1 :: doc_theta2 :: _ =>
+          (doc_theta1._1.year - doc_theta2._1.year).abs == distance
       }.take(1000).toList
-      val js = comparisons.map { case List(doc_theta1, doc_theta2) =>
-        Divergence.JS(doc_theta1._2, doc_theta2._2)
+      val js = comparisons.map {
+        case doc_theta1 :: doc_theta2 :: _ =>
+          Divergence.JS(doc_theta1._2, doc_theta2._2)
       }
       println("Distance: %3d (%3d) = %.5f" format (distance, comparisons.size, Divergence.Mean(js)))
     }

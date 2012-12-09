@@ -7,13 +7,13 @@
 #
 #$ -V                               # Inherit the submission environment
 #$ -cwd                             # Start job in submission dir
-#$ -N DTM1                       # Job name
+#$ -N dtmlarge                       # Job name
 #$ -j y                             # Combine stderr and stdout into stdout
 #$ -o $HOME/$JOB_NAME.out           # Name of the output file
 #$ -pe 1way 8                   # Request (cores)/8 machines
 #$ -q largemem                        # Submit to the "hadoop" queue (largemem is another queue)
 #$ -P hpc                          # Project name (Longhorn types: vis, data, gpgpu, hpc)
-#$ -l h_rt=3:00:00              # runtime (hh:mm:ss)
+#$ -l h_rt=8:00:00              # runtime (hh:mm:ss)
 #$ -A TeXIT             # set in profile_user.sh from /share/sge6.2/default/acct/map/ files
 
 #. $HOME/tacc-hadoop/hadoop-conf/hadoop-env.sh
@@ -47,7 +47,7 @@ if [[ -n "$PROWL_API_KEY" ]]; then
     -d description="Ready with $JOB_NAME (`date`)"
 fi
 
-sleep `expr 3 \\* 3600 - 60` # sleep for the duration, minus a minute to cool off
+sleep `expr 8 \\* 3600 - 60` # sleep for the duration, minus a minute to cool off
 
 #stop-cluster.sh
 

@@ -13,3 +13,5 @@ addSbtPlugin("com.github.retronym" % "sbt-onejar" % "0.8")
 //addSbtPlugin("com.typesafe.startscript" % "xsbt-start-script-plugin" % "0.5.1")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-start-script" % "0.6.0")
+
+addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.1.0")
