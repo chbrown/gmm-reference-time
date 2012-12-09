@@ -11,7 +11,7 @@ trait InstanceCorpus {
   def instances: Seq[Instance]
 }
 
-case class MalletTopicModel(N: Int, a: Double = 5.0, b: Double = 0.1) extends ParallelTopicModel(N, a, b) {
+class MalletTopicModel(N: Int, a: Double = 5.0, b: Double = 0.1) extends ParallelTopicModel(N, a, b) {
   // From https://gist.github.com/1763193
   setTopicDisplay(100, 20)
   setNumIterations(500)
@@ -44,10 +44,10 @@ case class MalletTopicModel(N: Int, a: Double = 5.0, b: Double = 0.1) extends Pa
     }
   }
 
-  def topicRankings(documentIndex: Int) = {
+  // def topicRankings(index: Int) = {
     // these are the thetas from the model (I think)
     // returns list of (weight, topic index) pairs, sorted descending on weight:
     // List((0.794, 4), (0.058, 1), etc.
-    getTopicProbabilities(documentIndex).zipWithIndex.sortBy(_._1).reverse
-  }
+    // getTopicProbabilities(index).zipWithIndex.sortBy(_._1).reverse
+  // }
 }

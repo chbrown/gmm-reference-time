@@ -24,7 +24,11 @@ libraryDependencies ++= Seq(
   "info.bliki.wiki" % "bliki-core" % "3.0.16",
   "commons-lang" % "commons-lang" % "2.6",
   "cc.mallet" % "mallet" % "2.0.7-RC2",
-  "com.codahale" % "jerkson_2.9.1" % "0.5.0"
+  "com.codahale" % "jerkson_2.9.1" % "0.5.0",
+  "org.scalanlp" %% "breeze-math" % "0.1",
+  "org.scalanlp" %% "breeze-learn" % "0.1",
+  "org.scalanlp" %% "breeze-process" % "0.1",
+  "org.scalanlp" %% "breeze-viz" % "0.1"
 )
 
 scalacOptions ++= Seq("-deprecation", "-Ydependent-method-types", "-unchecked")

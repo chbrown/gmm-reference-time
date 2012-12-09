@@ -127,7 +127,7 @@ object Mallet {
     instance_list.addThruPipe(eb_instances.toIterator) // ++ en_instances)
     instance_list
 
-    val topicModel = MalletTopicModel(50, a=1)
+    val topicModel = new MalletTopicModel(50, a=1)
     topicModel.addInstances(instance_list)
     topicModel.setNumIterations(100)
     topicModel.estimate
