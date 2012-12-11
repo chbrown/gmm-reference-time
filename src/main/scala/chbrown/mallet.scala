@@ -1,17 +1,84 @@
 package chbrown
 
-import cc.mallet.types.{Instance, InstanceList, IDSorter, Token, TokenSequence}
+import cc.mallet.types.{Instance, InstanceList, Alphabet, IDSorter, Token, TokenSequence, FeatureSequence}
 import cc.mallet.pipe._
 import cc.mallet.pipe.iterator.CsvIterator
 import cc.mallet.topics.ParallelTopicModel
 
 import scala.collection.JavaConversions._ // implicit
 
-trait InstanceCorpus {
-  def instances: Seq[Instance]
+// trait InstanceCorpus {
+//   def instances: Seq[Instance]
+// }
+
+class RichString(str: String) {
+  def tokenSet = str.split(' ').toSet
+}
+object UnencodeHtml extends Function1[String, String] {
+  def apply(string: String) = string
+    .replaceAllLiterally("&#x2019;", "'")
+    .replaceAllLiterally("&#x201c;", "\"")
+    .replaceAllLiterally("&#x201d;", "\"")
+    .replaceAllLiterally("&amp;", "&")
+    .replaceAllLiterally("&quot;", "\"")
+    .replaceAllLiterally("&apos;", "'")
+}
+object RemoveUrls extends Function1[String, String] {
+  def apply(string: String) = "http://\\S+".r.replaceAllIn(string.toString, "")
+}
+object Lowercase extends Function1[String, String] {
+  def apply(string: String) = string.toLowerCase
+}
+case class Tokenize(wordRegex: util.matching.Regex) extends Function1[String, Seq[String]] {
+  def apply(string: String) = wordRegex.findAllIn(string).toSeq
+}
+case class RemoveStopwords(stopwords: Set[String]) extends Function1[Seq[String], Seq[String]] {
+  def apply(tokens: Seq[String]) = tokens.filterNot(stopwords)
+}
+case class Instantiate(alphabet: Alphabet) extends Function1[Seq[String], Instance] {
+  def apply(tokens: Seq[String]) = {
+    val fs = new FeatureSequence(alphabet, tokens.size);
+    tokens.foreach(fs.add)
+    new Instance(fs, null, null, null)
+  }
+}
+object InstanceListify {
+  def apply(documents: TraversableOnce[Seq[String]]): InstanceList = {
+    val alphabet = new Alphabet()
+    val instance_list = new InstanceList(new Noop())
+    val instantiator = Instantiate(alphabet)
+    documents.map(instantiator).foreach(instance_list.add(_))
+    instance_list
+  }
 }
 
-class MalletTopicModel(N: Int, a: Double = 5.0, b: Double = 0.1) extends ParallelTopicModel(N, a, b) {
+object MalletTopicModel {
+  def fromFile(filePath: String,
+    numTopics: Int,
+    texts: TraversableOnce[Seq[String]],
+    force: Boolean = false,
+    alpha: Double = 5.0,
+    numIterations: Int = 500) = { // : MalletTopicModel | : ParallelTopicModel
+    var savedModel = new java.io.File(filePath)
+    // val topicModel =
+    if (force || !savedModel.exists()) {
+      val topicModel = new MalletTopicModel(numTopics, alpha)
+      topicModel.setNumIterations(numIterations)
+
+      val instance_list = InstanceListify(texts)
+      topicModel.addInstances(instance_list)
+      topicModel.estimate
+
+      topicModel.write(savedModel)
+      topicModel
+    }
+    else {
+      ParallelTopicModel.read(savedModel)//.asInstance(MalletTopicModel)
+    }
+  }
+}
+
+class MalletTopicModel(numTopics: Int, alpha: Double = 5.0, beta: Double = 0.1) extends ParallelTopicModel(numTopics, alpha, beta) {
   // From https://gist.github.com/1763193
   setTopicDisplay(100, 20)
   setNumIterations(500)

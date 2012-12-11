@@ -1,6 +1,8 @@
 package chbrown.tacc
 
-import chbrown.{MalletTopicModel, InstanceCorpus, ArgMapper, Tabular, Lexicon}
+import chbrown.{MalletTopicModel, ArgMapper, Tabular, Lexicon}
+import chbrown.{RichString, Lowercase, Tokenize, RemoveStopwords, Instantiate, InstanceListify}
+
 
 import scala.collection.JavaConversions._ // implicit
 import scala.collection.JavaConverters._ // asScala
@@ -8,11 +10,6 @@ import scala.util.control.ControlThrowable
 
 import cc.mallet.types.{Instance, InstanceList, IDSorter, Token, TokenSequence}
 import cc.mallet.pipe._
-
-// import scala.io.Source._
-// import java.util.TreeSet
-// Lots of help from https://gist.github.com/1763193
-// http://mallet.cs.umass.edu/topics.php
 
 object Divergence {
   // Info-theory metrics for discrete distributions
@@ -32,61 +29,26 @@ object Divergence {
   }
 }
 
-// val instance_list = new InstanceList(new TokenSequence2FeatureSequence())
-// io.Source.fromFile(in).getLines.zipWithIndex.foreach { case (line, index) =>
-//   // line: "[label-year]\t[all the text]"
-//   line.split("\t") match {
-//     case Array(year, text) =>
-//       val tokens = text.toLowerCase.split("[^'a-z0-9A-Z]+").
-//         filterNot(stopwords).
-//         filterNot(_.isEmpty)
-//       val tokenSequence = new TokenSequence(tokens.map(new Token(_)))
-//       val instance = new Instance(tokenSequence, year, index, null)
-//       instance_list.addThruPipe(instance)
-//   }
-// }
-
-
-// object isStopword {
-//   // from http://www.ranks.nl/resources/stopwords.html
-//   val tokens = "a about above after again against all am an and any are aren't as at be because been before being below between both but by can't cannot could couldn't did didn't do does doesn't doing don't down during each few for from further had hadn't has hasn't have haven't having he he'd he'll he's her here here's hers herself him himself his how how's i i'd i'll i'm i've if in into is isn't it it's its itself let's me more most mustn't my myself no nor not of off on once only or other ought our ours ourselves out over own same shan't she she'd she'll she's should shouldn't so some such than that that's the their theirs them themselves then there there's these they they'd they'll they're they've this those through to too under until up very was wasn't we we'd we'll we're we've were weren't what what's when when's where where's which while who who's whom why why's with won't would wouldn't you you'd you'll you're you've your yours yourself yourselves".split(' ')
-
-// class TextPipe {
-//   def pipe(instance: Instance) = { }
-// }
-
-// data, target, name, source
-class YearInstance(text: String, val year: Int, name: Object, source: Object) extends Instance(text, year, name, source) {
-  def this(text: String, year: Int) = this(text, year, null, null)
-}
+case class YearDocument(year: Int, text: String)
 
 object Mallet {
+  implicit def enrichString(x: String) = new RichString(x)
 
-  def readInstances(pathIn: String) = { //: List[YearInstance]
-    Tabular.read(pathIn, headers=Some(List("Year", "Text"))).map { map =>
-      val year = map("Year") match {
-        case "xxxx" => 0
-        case integer => integer.toInt
-      }
-      val digitless_text = "\\b\\d+\\b".r.replaceAllIn(map("Text"), "")
-      new YearInstance(digitless_text, year)
-    } filter { dated_doc =>
-      1800 <= dated_doc.year && dated_doc.year <= 1900
-    } toList
-  }
+  // def readInstances(pathIn: String) = { //: List[YearInstance]
+  // }
 
   // case class EB1911(pathIn: String) extends InstanceCorpus {
   // val year_texts = all_year_texts.filter(
 
-  // val numerals = "1 2 3 4 5 6 7 8 9 0 "
-  // val roman_numerals = "ii iii iv "
-  // val letters = "a b c d e f g h j k l m n o p q r s t u v w x y z "
+  val numerals = "1 2 3 4 5 6 7 8 9 0 000".tokenSet
+  val roman_numerals = "ii iii iv".tokenSet
+  val letters = "a b c d e f g h j k l m n o p q r s t u v w x y z".tokenSet
   // val common = "also all about who have not has th had been be its this or an but are that
+  val common = "and in for to was by a of is as from on it at which with that s were are but or".tokenSet
   //   were as which with it from on at for is by was to and in of the "
-  // val stopwords = (numerals + roman_numerals + letters + common + "000").split(' ').toSet
+  val stopwords = numerals ++ roman_numerals ++ letters ++ common
 
-
-  def meanDistances(doc_thetas: Seq[(YearInstance, Array[Double])]) {
+  def meanDistances(doc_thetas: Seq[(YearDocument, Array[Double])]) {
     val distances = List(0, 1, 2, 5, 10, 25, 50)
     distances.foreach { distance =>
       // val year_pairs = .zip(year_instances.indices.drop(distance))
@@ -102,42 +64,69 @@ object Mallet {
     }
   }
 
-  // def doEB1911(args: Map[String, String]) {}
+  // object FilterNotDigits extends Function1[String, String] {
+  //   def apply(string: String) = string.
+  // }
+  val scratch = "/scratch/01613/chbrown"
 
-  def main(args: Array[String]) = {
-    // run-main chbrown.tacc.Mallet eb-12k-doc-windows.tsv
+  def main(argstrings: Array[String]) = {
+    // run-main chbrown.tacc.Mallet eb-12k-windows.tsv
 
-    // val eb1911 = EB1911("/Users/chbrown/corpora/gmm/eb-12k-windows.tsv")
+    val args = ArgMapper(argstrings, Map(
+      "pathIn" -> "eb-12k-windows.tsv",
+      "reset" -> "FALSE"))
 
-    val stopwordFilter = new TokenSequenceRemoveStopwords()
-    stopwordFilter.addStopWords(
-      "and in for to was by a of is as from on it at which with that s were are but or 1 2 3 4 5 6 7 8 9 0".split(' ')
-    )
+    val documents = Tabular.read("%s/%s" format (scratch, args("pathIn")), headers=Some(List("year", "text")))
+      .filter(_("year") != "xxxx")
+      .map(docMap => YearDocument(docMap("year").toInt, docMap("text")))
+      .filter(doc => 1700 <= doc.year && doc.year <= 1911)
+      .toList
 
-    val pipes = new SerialPipes(List(
-      new CharSequence2TokenSequence("\\w+".r.pattern),
-      new TokenSequenceLowercase(),
-      stopwordFilter,
-      new TokenSequence2FeatureSequence()
-    ))
+    val pipeline = Lowercase andThen Tokenize("\\w+".r) andThen RemoveStopwords(stopwords) andThen
+      { _.filterNot(_.matches("\\d+")) }
 
-    val cds = "/scratch/01613/chbrown/"
-    val Array(inPath) = args
-    val eb_instances = readInstances(cds+inPath)
-    // val en_instances = readInstances(cds+"enwiki-12k-windows.tsv")
-    val instance_list = new InstanceList(pipes)
-    instance_list.addThruPipe(eb_instances.toIterator) // ++ en_instances)
-    instance_list
 
-    val topicModel = new MalletTopicModel(50, a=1)
-    topicModel.addInstances(instance_list)
-    topicModel.setNumIterations(100)
-    topicModel.estimate
+    val force = args("reset") != "FALSE"
+    val texts = documents.map(_.text).map(pipeline)
+    val topicModel = MalletTopicModel.fromFile("tmp/topicmodel.mallet", 50, texts, force=force, alpha=1)
 
-    val indices = eb_instances.indices
-    val eb_thetas = indices.map(topicModel.getTopicProbabilities)
+    // val instanceList = InstanceListify()
+    // topicModel.addInstances(instanceList)
+    // topicModel.setNumIterations(500)
+    // topicModel.estimate
+
+    val indices = documents.indices
+    val documentThetas = indices.map(topicModel.getTopicProbabilities)
     // val en_thetas = indices.map(_+indices.size).map(topicModel.getTopicProbabilities)
-    meanDistances(eb_instances.zip(eb_thetas))
+
+    // 10, 1, 5 are the params used in one of the mallet testcases
+
+    val devListPath = "%s/timepaper/gutenberg/dev/devList.txt" format scratch
+    val devDocuments = Tabular.read(devListPath, headers=Some(List("title", "year"))).map { docMap =>
+      val title = docMap("title")
+      val year = docMap("year").substring(0, 4).toInt
+      val textPath = "%s/timepaper/gutenberg/dev/unfiltered/%s_clean.txt" format (scratch, title)
+      val text = io.Source.fromFile(textPath).getLines.mkString(" ")
+      YearDocument(year, text)
+      // (year, title, text)
+    }.filter(doc => 1700 <= doc.year && doc.year <= 1911)
+    //  filter { case (year, title, text) =>
+    //   1700 <= doc.year && doc.year <= 1911)
+    // }
+
+    val Instantiator = Instantiate(topicModel.getAlphabet())
+    val inferencer = topicModel.getInferencer()
+    // (devDocuments, devInstances).take(10).foreach { case ((year, title, text), instance) =>
+    devDocuments.foreach { case YearDocument(year, text) =>
+      val instance = Instantiator(pipeline(text))
+      val theta = inferencer.getSampledDistribution(instance, 100, 10, 500)
+      val closestYearDoc = (documentThetas, documents).zipped.map { case (docTheta, doc) =>
+        (Divergence.JS(theta, docTheta), doc)
+      }.sortBy(_._1).head._2
+      println("Actual -> %d :: %d <- Nearest" format (year, closestYearDoc.year))
+    }
+
+    // meanDistances(instances.zip(thetas))
 
     // val distances = List(0, 1, 2, 5, 10, 25, 50)
     // distances.foreach { distance =>

@@ -29,3 +29,27 @@ object Tabular {
     rows.map(cells => final_headers.zip(cells).toMap)
   }
 }
+
+object File {
+  def writeLines(filePath: String, lines: TraversableOnce[String]) {
+    val fp = new java.io.FileWriter(filePath)
+    try {
+      lines.foreach { line =>
+        fp.write(line+"\n")
+      }
+    } finally {
+      fp.close()
+    }
+  }
+
+  def readLines(file: java.io.File) = io.Source.fromFile(file).getLines
+  def readLines(name: String) = io.Source.fromFile(name).getLines
+
+  def walk(filePath: String) = {
+    def recursiveListFiles(f: java.io.File): Array[java.io.File] = {
+      val these = f.listFiles
+      these ++ these.filter(_.isDirectory).flatMap(recursiveListFiles)
+    }
+    recursiveListFiles(new java.io.File(filePath))
+  }
+}

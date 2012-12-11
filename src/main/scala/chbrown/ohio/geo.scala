@@ -1,12 +1,10 @@
 package chbrown.ohio
 
-import chbrown.InstanceCorpus
-
 import cc.mallet.types.{Instance, InstanceList, IDSorter, Token, TokenSequence}
 import cc.mallet.pipe._
 import scala.collection.JavaConversions._ // implicit
 
-class GeoText(pathIn: String) extends InstanceCorpus {
+class GeoText(pathIn: String) {
   val stopwordFilter = new TokenSequenceRemoveStopwords()
   stopwordFilter.addStopWords(
     "to m a on in the you to a is it of t that rt u lt s da 1 2 3 4 5".split(" ")

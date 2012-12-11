@@ -1,9 +1,9 @@
 package chbrown.ohio
 
-import chbrown.{MalletTopicModel, InstanceCorpus, ArgMapper, Tabular, Lexicon}
+import chbrown.{MalletTopicModel, ArgMapper, Tabular, Lexicon, File}
+import chbrown.{UnencodeHtml, RemoveUrls, RichString, Lowercase, Tokenize, RemoveStopwords, InstanceListify}
 import collection.mutable.{ListBuffer, Map=>MutableMap}
 
-import cc.mallet.types.{Instance, InstanceList, Alphabet, FeatureSequence}
 import cc.mallet.pipe._
 import cc.mallet.topics.ParallelTopicModel
 
@@ -18,50 +18,9 @@ import breeze.classify._
 import breeze.data._
 import breeze.linalg._
 
-class RichString(str: String) {
-  def tokenSet = str.split(' ').toSet
-}
-// object Implicits {
-//   implicit def enrichString(x: String) = new RichString(x)
-// }
-
 // class TweetInstance(text: String, author: String, id: String) extends Instance(text) {
   // val tokens = "[a-z]['a-z]*".r.findAllIn(tweet.text.toLowerCase).toList
   // val tokens = clean.split("[^'a-z0-9A-Z]+").filterNot(stopwords).filterNot(_.isEmpty)
-
-object UnencodeHtml extends Function1[String, String] {
-  def apply(string: String) = string
-    .replaceAllLiterally("&#x2019;", "'")
-    .replaceAllLiterally("&#x201c;", "\"")
-    .replaceAllLiterally("&#x201d;", "\"")
-    .replaceAllLiterally("&amp;", "&")
-    .replaceAllLiterally("&quot;", "\"")
-    .replaceAllLiterally("&apos;", "'")
-}
-object RemoveUrls extends Function1[String, String] {
-  def apply(string: String) = "http://\\S+".r.replaceAllIn(string.toString, "")
-}
-object Lowercase extends Function1[String, String] {
-  def apply(string: String) = string.toLowerCase
-}
-case class Tokenize(wordRegex: util.matching.Regex) extends Function1[String, Seq[String]] {
-  def apply(string: String) = wordRegex.findAllIn(string).toSeq
-}
-case class RemoveStopwords(stopwords: Set[String]) extends Function1[Seq[String], Seq[String]] {
-  def apply(tokens: Seq[String]) = tokens.filterNot(stopwords)
-}
-object Featurize {
-  def apply(documents: Seq[Seq[String]]): InstanceList = {
-    val alphabet = new Alphabet()
-    val instance_list = new InstanceList(new Noop())
-    documents.foreach { tokens =>
-      val fs = new FeatureSequence(alphabet, tokens.size);
-      tokens.foreach { token => fs.add(token) }
-      instance_list.add(new Instance(fs, null, null, null))
-    }
-    instance_list
-  }
-}
 
 case class Tweet(text: String, author: String, id: String)
 
@@ -119,19 +78,6 @@ object FederalistCorpus {
   }
 }
 
-object File {
-  def writeLines(filePath: String, lines: Seq[String]) {
-    val fp = new java.io.FileWriter(filePath)
-    try {
-      lines.foreach { line =>
-        fp.write(line+"\n")
-      }
-    } finally {
-      fp.close()
-    }
-  }
-}
-
 object Topics {
   implicit def enrichString(x: String) = new RichString(x)
 
@@ -167,10 +113,10 @@ object Topics {
 
     var saved_model = new java.io.File("tmp/topicmodel.mallet");
     val topicModel = if (args("reset") != "FALSE" || !saved_model.exists()) {
-      val topicModel = new MalletTopicModel(10, a=0.1)
+      val topicModel = new MalletTopicModel(10, alpha=0.1)
       topicModel.setNumIterations(500)
 
-      val instance_list = Featurize(texts)
+      val instance_list = InstanceListify(texts)
       topicModel.addInstances(instance_list)
       topicModel.estimate
 
