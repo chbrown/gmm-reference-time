@@ -52,15 +52,16 @@ object Mallet {
     val distances = List(0, 1, 2, 5, 10, 25, 50)
     distances.foreach { distance =>
       // val year_pairs = .zip(year_instances.indices.drop(distance))
-      val comparisons = doc_thetas.combinations(2).filter {
-        case doc_theta1 :: doc_theta2 :: _ =>
-          (doc_theta1._1.year - doc_theta2._1.year).abs == distance
-      }.take(1000).toList
-      val js = comparisons.map {
-        case doc_theta1 :: doc_theta2 :: _ =>
-          Divergence.JS(doc_theta1._2, doc_theta2._2)
-      }
-      println("Distance: %3d (%3d) = %.5f" format (distance, comparisons.size, Divergence.Mean(js)))
+      val js = doc_thetas.combinations(2).map { vector =>
+        (vector(0), vector(1))
+      } filter { case (doc_theta1, doc_theta2) =>
+        (doc_theta1._1.year - doc_theta2._1.year).abs == distance
+      } map { case (doc_theta1, doc_theta2) =>
+        Divergence.JS(doc_theta1._2, doc_theta2._2)
+      } take(1000) toList
+
+      // WTF, remove the FUCKING *BLANK* line above and this fails to compile. Nice, Scala.
+      println("Distance: %3d (%3d) = %.5f" format (distance, js.size, Divergence.Mean(js)))
     }
   }
 
@@ -76,7 +77,7 @@ object Mallet {
       "pathIn" -> "eb-12k-windows.tsv",
       "reset" -> "FALSE"))
 
-    val documents = Tabular.read("%s/%s" format (scratch, args("pathIn")), headers=Some(List("year", "text")))
+    val documents = Tabular.read("%s/%s" format (scratch, args("pathIn")), forceHeaders=Some(List("year", "text")))
       .filter(_("year") != "xxxx")
       .map(docMap => YearDocument(docMap("year").toInt, docMap("text")))
       .filter(doc => 1700 <= doc.year && doc.year <= 1911)
@@ -102,7 +103,7 @@ object Mallet {
     // 10, 1, 5 are the params used in one of the mallet testcases
 
     val devListPath = "%s/timepaper/gutenberg/dev/devList.txt" format scratch
-    val devDocuments = Tabular.read(devListPath, headers=Some(List("title", "year"))).map { docMap =>
+    val devDocuments = Tabular.read(devListPath, forceHeaders=Some(List("title", "year"))).map { docMap =>
       val title = docMap("title")
       val year = docMap("year").substring(0, 4).toInt
       val textPath = "%s/timepaper/gutenberg/dev/unfiltered/%s_clean.txt" format (scratch, title)
