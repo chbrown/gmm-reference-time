@@ -12,8 +12,10 @@ for line in open('circles.csv'):
 min_distance = min(distance for year1, year2, distance in distances)
 max_distance = max(distance for year1, year2, distance in distances)
 
+
 def mean(*args):
     return sum(args) / float(len(args))
+
 
 def renormalize(x, domain_min=0, domain_max=1, range_min=0, range_max=1):
     '''Rearrange a variable in the 0-1 domain to a new range'''
@@ -21,9 +23,11 @@ def renormalize(x, domain_min=0, domain_max=1, range_min=0, range_max=1):
     range_diff = range_max - range_min
     return (((x - domain_min) / domain_diff) * range_diff) + range_min
 
+
 @route('/favicon.ico')
 def favicon():
     return ''
+
 
 @route('/')
 def index():
